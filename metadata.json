@@ -1,0 +1,7 @@
+{
+  "name": "Copy of Dr. Mostafa El-Sayed: A Biography",
+  "description": "Learn about the life and achievements of Dr. Mostafa El-Sayed through an interactive story.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}

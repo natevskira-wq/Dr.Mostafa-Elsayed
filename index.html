@@ -1,0 +1,1454 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Der verborgene Code - Ultimate Edition</title>
+    <!-- Modern Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Merriweather:ital,wght@0,300;0,700;1,400&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        /* =========================================
+           CSS STYLING - MODERN UI
+           ========================================= */
+        :root {
+            --bg-color: #f3f4f6;
+            --text-color: #1f2937;
+            --panel-bg: #ffffff;
+            --accent-color: #2563eb; /* Modern Blue */
+            --accent-hover: #1d4ed8;
+            --success-color: #10b981;
+            --error-color: #ef4444;
+            --highlight-color: #e5e7eb;
+            --karaoke-bg: #fde047;
+            --karaoke-text: #854d0e;
+            --trouble-bg: #fee2e2;
+            --tooltip-bg: #111827;
+            --font-size-base: 18px;
+            --radius: 12px;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        body.dark-mode {
+            --bg-color: #111827; --text-color: #f9fafb; --panel-bg: #1f2937;
+            --accent-color: #60a5fa; --highlight-color: #374151;
+            --karaoke-bg: #854d0e; --karaoke-text: #fde047;
+            --trouble-bg: #7f1d1d;
+        }
+
+        body.sepia-mode {
+            --bg-color: #f5f5dc; --text-color: #433422; --panel-bg: #fff8e7;
+            --accent-color: #d97706; --highlight-color: #ede0c8;
+        }
+
+        body[dir="rtl"] { text-align: right; font-family: 'Tahoma', sans-serif; }
+        
+        * { box-sizing: border-box; transition: all 0.2s ease; }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color); color: var(--text-color);
+            margin: 0; padding: 0; height: 100vh;
+            display: flex; flex-direction: column; overflow: hidden;
+        }
+
+        /* HEADER */
+        header {
+            padding: 12px 25px; background: var(--panel-bg);
+            box-shadow: var(--shadow);
+            display: flex; justify-content: space-between; align-items: center; z-index: 100;
+        }
+        .hud { display: flex; gap: 20px; font-weight: 600; color: var(--accent-color); align-items: center; }
+        .badge { background: #fbbf24; color: #78350f; padding: 4px 8px; border-radius: 20px; font-size: 0.75em; text-transform: uppercase; letter-spacing: 0.5px; margin-left: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+
+        header button {
+            background: transparent; border: none; font-size: 1.1em; margin-left: 5px;
+            color: var(--text-color); width: 40px; height: 40px; border-radius: 50%;
+        }
+        header button:hover { background: var(--highlight-color); }
+
+        /* LAYOUT & RESPONSIVENESS */
+        .book-container { display: flex; flex: 1; overflow: hidden; position: relative; max-width: 1600px; margin: 0 auto; width: 100%; }
+        
+        body.focus-mode .visual-panel { display: none; }
+        body.focus-mode .text-panel { max-width: 900px; margin: 0 auto; border: none; }
+
+        .text-panel {
+            flex: 1.2; padding: 40px; overflow-y: auto;
+            font-size: var(--font-size-base); line-height: 1.9;
+            display: flex; flex-direction: column;
+            font-family: 'Merriweather', serif; /* Better for reading */
+        }
+
+        .visual-panel {
+            flex: 1; background: #000; display: flex; justify-content: center; align-items: center;
+            position: relative; overflow-y: auto;
+        }
+        .visual-panel.bilingual-mode {
+            background: var(--panel-bg); color: var(--text-color); 
+            align-items: flex-start; padding: 40px; justify-content: flex-start;
+            font-size: 1.1em; line-height: 1.6; border-left: 1px solid var(--highlight-color);
+        }
+        .scene-image { max-width: 100%; max-height: 100%; object-fit: contain; animation: fadeIn 0.6s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
+
+        /* INTERACTIVE WORDS */
+        .word { 
+            cursor: pointer; padding: 2px 3px; border-radius: 4px; 
+            position: relative; display: inline-block; margin: 0 1px;
+        }
+        .word:hover { background-color: var(--highlight-color); color: var(--accent-color); }
+        .word.trouble-word { border-bottom: 2px solid #ef4444; background: var(--trouble-bg); }
+        .word.active-word {
+            background-color: var(--karaoke-bg); color: var(--karaoke-text);
+            transform: scale(1.05); font-weight: bold; z-index: 10;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-radius: 4px;
+        }
+        
+        /* TOOLTIP */
+        .word:hover::after {
+            content: attr(data-trans); position: absolute; bottom: 140%; left: 50%; transform: translateX(-50%);
+            background: var(--tooltip-bg); color: #fff; padding: 8px 12px; border-radius: 8px;
+            font-size: 0.85rem; white-space: nowrap; pointer-events: none; z-index: 1000;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); font-family: 'Inter', sans-serif;
+        }
+        .word:hover::before {
+            content: ''; position: absolute; bottom: 130%; left: 50%; transform: translateX(-50%);
+            border: 6px solid transparent; border-top-color: var(--tooltip-bg); pointer-events: none;
+        }
+
+        /* PRACTICE & QUIZ SECTIONS */
+        .practice-container {
+            margin: 20px 0; padding: 20px;
+            background: var(--highlight-color); border-radius: var(--radius);
+            font-family: 'Inter', sans-serif; border: 1px solid rgba(0,0,0,0.05);
+        }
+        
+        .quiz-container { margin-top: 30px; border-top: 1px dashed #ccc; padding-top: 20px; font-family: 'Inter', sans-serif; }
+        .quiz-item {
+            background: var(--panel-bg); margin-bottom: 15px; padding: 20px;
+            border-radius: var(--radius); border-left: 4px solid var(--accent-color);
+            box-shadow: var(--shadow);
+        }
+        .quiz-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; }
+        .quiz-question-text { font-weight: 600; cursor: pointer; flex: 1; display:flex; gap:10px; align-items:center; }
+        .quiz-question-text i { color: var(--accent-color); }
+        
+        .quiz-input-group { display: flex; gap: 10px; margin-bottom: 10px; }
+        .quiz-input { 
+            flex: 1; padding: 10px 15px; border: 2px solid var(--highlight-color); 
+            border-radius: 8px; font-family: inherit; background: var(--bg-color); color: var(--text-color);
+        }
+        .quiz-input:focus { outline: none; border-color: var(--accent-color); background: var(--panel-bg); }
+        .quiz-input.solved { border-color: var(--success-color); background: rgba(16, 185, 129, 0.1); color: var(--success-color); font-weight: bold; }
+        
+        .feedback-msg { font-size: 0.9em; margin-top: 8px; font-weight: bold; min-height: 1.2em;}
+        .feedback-msg.correct { color: var(--success-color); }
+        .feedback-msg.incorrect { color: var(--error-color); }
+
+        /* BUTTONS & CONTROLS */
+        button.primary-btn, .check-btn {
+            background: var(--accent-color); color: white; border: none;
+            padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer;
+            box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
+        }
+        button.primary-btn:hover, .check-btn:hover { background: var(--accent-hover); transform: translateY(-1px); }
+        button:disabled { background: #9ca3af; cursor: not-allowed; transform: none; }
+
+        .mic-btn { width: 45px; height: 42px; display:flex; justify-content:center; align-items:center; border:none; border-radius:8px; background: #6b7280; color:white; cursor: pointer;}
+        .mic-btn:hover { background: #4b5563; }
+        .mic-btn.recording { background: var(--error-color); animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+
+        /* FOOTER CONTROLS */
+        .controls-bar {
+            background: var(--panel-bg); padding: 15px 30px;
+            border-top: 1px solid rgba(0,0,0,0.05);
+            display: grid; 
+            grid-template-columns: 1fr 1.5fr 0.8fr; /* Adjusted grid for new button layout */
+            align-items: center; gap: 20px; box-shadow: 0 -4px 6px -1px rgba(0,0,0,0.05);
+            z-index: 90;
+        }
+        .audio-wrapper { 
+            display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 600px; margin: 0 auto;
+        }
+        .scrub-bar { width: 100%; cursor: pointer; margin-bottom: 8px; accent-color: var(--accent-color); }
+        .audio-btns { display: flex; gap: 20px; align-items: center; }
+        .play-circle { width: 50px; height: 50px; border-radius: 50%; font-size: 1.2rem; padding: 0; display:flex; justify-content:center; align-items:center;}
+
+        /* New TTS Control Panel */
+        .tts-control-group { /* New container for TTS related buttons and controls */
+            display: flex;
+            flex-direction: column;
+            gap: 8px; /* Slightly reduced gap */
+            align-items: flex-start;
+        }
+
+        .cc-btn { /* Style for CC button */
+            background: var(--bg-color); 
+            border:1px solid #ccc;
+            padding: 8px 12px; 
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            color: var(--text-color);
+            font-size: 0.9em; /* Match read-aloud button size */
+        }
+        .cc-btn:hover { background: var(--highlight-color); }
+
+        .read-aloud-btn {
+            background: var(--accent-color); color: white; border: none;
+            padding: 8px 12px; 
+            border-radius: 8px; font-weight: 600; cursor: pointer;
+            box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
+            display: flex; align-items: center; gap: 8px;
+            white-space: nowrap;
+            font-size: 0.9em; 
+        }
+        .read-aloud-btn:hover { background: var(--accent-hover); transform: translateY(-1px); }
+
+        /* TTS Playback Controls - made smaller and compact */
+        .tts-playback-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 4px; /* Even smaller gap */
+            align-items: flex-start; 
+            width: 100%; 
+            max-width: 280px; /* Adjusted max-width for better fit */
+            padding: 6px; 
+            border: 1px solid var(--highlight-color);
+            border-radius: 8px;
+            background: var(--bg-color);
+            box-shadow: var(--shadow);
+        }
+
+        .tts-controls-row {
+            display: flex;
+            align-items: center;
+            gap: 6px; 
+            width: 100%;
+        }
+
+        .tts-controls-row .scrub-bar {
+            margin-bottom: 0; 
+            height: 6px; /* Make scrubber thinner */
+        }
+        
+        .tts-speed-btn, .tts-skip-btn {
+            background: var(--highlight-color);
+            color: var(--text-color);
+            border: none;
+            padding: 4px 8px; 
+            border-radius: 5px;
+            font-weight: 500;
+            cursor: pointer;
+            font-size: 0.75em; 
+            white-space: nowrap;
+        }
+        .tts-speed-btn:hover, .tts-skip-btn:hover { background: var(--accent-color); color: white; }
+        .tts-speed-btn.primary-btn, .tts-skip-btn.primary-btn {
+            background: var(--accent-color);
+            color: white;
+            box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+        }
+
+        .tts-controls-group-label {
+            color: var(--text-color);
+            font-weight: 500;
+            font-size: 0.85em; 
+            white-space: nowrap;
+            min-width: 40px; /* Give label a fixed min-width for alignment */
+        }
+
+        .watermark {
+            text-align: center; font-size: 0.75rem; color: #9ca3af; padding: 4px; background: var(--panel-bg);
+            border-top: 1px solid rgba(0,0,0,0.05); letter-spacing: 1px;
+        }
+
+        /* MODALS */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 2000; justify-content: center; align-items: center;
+        }
+        .modal-content {
+            background: var(--panel-bg); padding: 30px; border-radius: 16px;
+            width: 90%; max-width: 450px; max-height: 85vh; overflow-y: auto;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        .settings-group { margin-bottom: 20px; }
+        .settings-group label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.9em; color: var(--accent-color); }
+        .settings-group select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; background: var(--bg-color); color: var(--text-color); }
+
+        .vocab-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; margin-top: 15px; }
+        .vocab-card { border: 1px solid var(--highlight-color); padding: 10px; text-align: center; border-radius: 8px; cursor: pointer; font-size: 0.9em; background: var(--bg-color); transition: transform 0.2s; }
+        .vocab-card:hover { transform: translateY(-3px); border-color: var(--accent-color); }
+
+        /* RESPONSIVE OPTIMIZATION */
+        @media (max-width: 768px) {
+            .book-container { flex-direction: column-reverse; } /* Text on bottom, Image on top for mobile */
+            .text-panel { flex: none; height: 60vh; padding: 20px; }
+            .visual-panel { height: 30vh; flex: none; border-bottom: 1px solid var(--highlight-color); border-left: none; }
+            
+            .controls-bar { 
+                grid-template-columns: 1fr; 
+                gap: 15px; 
+                padding: 10px 15px;
+                position: relative;
+            }
+            .audio-wrapper { width: 100%; }
+            .nav-controls { display: flex; justify-content: space-between; width: 100%; margin-top: 5px; }
+            
+            /* Hide non-essential header items on small screens */
+            .hud span:last-child { display: none; } 
+            
+            header { padding: 10px 15px; }
+            header button { width: 35px; height: 35px; }
+
+            .tts-control-group { /* Full width on small screens */
+                max-width: 100%; 
+                align-items: center; /* Center align on small screens */
+            }
+
+            .tts-playback-controls {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SETTINGS MODAL -->
+    <div id="settings-modal" class="modal">
+        <div class="modal-content">
+            <h2 data-i18n="settings" style="margin-top:0">Settings</h2>
+            
+            <div class="settings-group">
+                <label data-i18n="ui_lang">Interface Language</label>
+                <select id="ui-lang-select" onchange="app.changeUILanguage()">
+                    <option value="de">Deutsch</option>
+                    <option value="en">English</option>
+                    <option value="ar">العربية</option>
+                </select>
+            </div>
+
+            <div class="settings-group">
+                <label data-i18n="voice_select">Narrator Voice (TTS)</label>
+                <select id="voice-select" onchange="app.changeVoice()"></select>
+            </div>
+
+            <div class="settings-group">
+                <label data-i18n="trans_lang">Translate To</label>
+                <select id="trans-lang-select" onchange="app.changeTransLanguage()">
+                    <option value="en">English</option>
+                    <option value="de">Deutsch</option>
+                    <option value="ar">Arabic</option>
+                </select>
+            </div>
+
+            <div class="settings-group">
+                <label data-i18n="theme">Theme</label>
+                <div style="display:flex; gap:10px;">
+                    <button onclick="app.setTheme('light')" style="flex:1">Light</button>
+                    <button onclick="app.setTheme('dark')" style="flex:1">Dark</button>
+                    <button onclick="app.setTheme('sepia')" style="flex:1">Sepia</button>
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <label data-i18n="font_size">Font Size</label>
+                <div style="display:flex; gap:10px;">
+                    <button onclick="app.adjustFont(-2)" style="flex:1">A-</button>
+                    <button onclick="app.adjustFont(0)" style="flex:1">Reset</button>
+                    <button onclick="app.adjustFont(2)" style="flex:1">A+</button>
+                </div>
+            </div>
+
+            <button class="primary-btn" onclick="app.toggleModal('settings-modal')" style="width:100%;" data-i18n="close">Close</button>
+        </div>
+    </div>
+
+    <!-- VOCAB MODAL -->
+    <div id="vocab-modal" class="modal">
+        <div class="modal-content">
+            <h2 data-i18n="vocab" style="margin-top:0">Vocabulary</h2>
+            <p id="vocab-count" style="color:#666; font-size:0.9em;"></p>
+            <div class="vocab-grid" id="vocab-list"></div>
+            <br>
+            <button class="primary-btn" onclick="app.toggleModal('vocab-modal')" style="width:100%;" data-i18n="close">Close</button>
+        </div>
+    </div>
+
+    <!-- HEADER -->
+    <header>
+        <div class="hud">
+            <span><i class="fas fa-star" style="color:#fbbf24"></i> <span id="xp-display">0</span> XP</span>
+            <span id="badge-container"></span>
+        </div>
+        <div>
+            <button onclick="app.toggleFocusMode()" title="Focus Mode"><i class="fas fa-expand"></i></button>
+            <button onclick="app.toggleBilingual()" title="Bilingual Split"><i class="fas fa-columns"></i></button>
+            <button onclick="app.toggleModal('vocab-modal')" title="Vocabulary"><i class="fas fa-book"></i></button>
+            <button onclick="app.toggleModal('settings-modal')" title="Settings"><i class="fas fa-cog"></i></button>
+        </div>
+    </header>
+
+    <div style="height:4px; background:var(--highlight-color); width:100%;"><div id="progress-bar" style="height:100%; background:var(--accent-color); width:0%; transition: width 0.5s;"></div></div>
+
+    <!-- MAIN CONTENT -->
+    <div class="book-container">
+        <!-- LEFT: TEXT & QUIZ -->
+        <div class="text-panel">
+            <h2 id="scene-title" style="color:var(--accent-color); border-bottom:2px solid var(--highlight-color); padding-bottom:15px; margin-top:0;">Title</h2>
+            
+            <div id="story-content"></div>
+
+            <!-- SPEECH PRACTICE -->
+            <div class="practice-container">
+                <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+                    <i class="fas fa-microphone-alt" style="color:var(--accent-color); font-size:1.2em;"></i>
+                    <strong data-i18n="practice_title">Sprechübung (Speech Practice)</strong>
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <button class="primary-btn" onclick="app.startPracticeRecording(this)">
+                        <i class="fas fa-record-vinyl"></i> <span data-i18n="record">Record</span>
+                    </button>
+                    <div id="speech-result" style="flex:1; padding:10px; border:1px solid #ccc; border-radius:8px; background:var(--panel-bg); font-style:italic; min-height:42px;">...</div>
+                </div>
+            </div>
+
+            <!-- SUBTITLES -->
+            <div id="subtitle-box" style="margin:20px 0; padding:15px; border-left:4px solid var(--highlight-color); font-style:italic; color:gray; background:rgba(0,0,0,0.02); border-radius:0 8px 8px 0;"></div>
+
+            <!-- COMPREHENSION QUIZ -->
+            <div class="quiz-container" id="quiz-section" style="display:none;">
+                <h3 style="margin-bottom:20px; color:var(--text-color);"><i class="fas fa-puzzle-piece" style="color:var(--accent-color)"></i> <span data-i18n="quiz_title">Comprehension Check</span></h3>
+                <div id="quiz-list"></div>
+            </div>
+        </div>
+
+        <!-- RIGHT: VISUAL / BILINGUAL -->
+        <div class="visual-panel" id="visual-panel">
+            <img id="scene-img" class="scene-image" src="" alt="Scene Visual">
+            <div id="bilingual-text" class="visual-panel bilingual-mode" style="display:none;"></div>
+        </div>
+    </div>
+
+    <!-- CONTROLS -->
+    <div class="controls-bar">
+        <div class="tts-control-group" id="tts-control-group">
+            <button onclick="app.toggleSubtitles()" title="Toggle Subtitles" class="cc-btn">CC</button>
+            <button id="read-aloud-btn" class="read-aloud-btn" onclick="app.speakFullText()">
+                <i class="fas fa-volume-up"></i> <span data-i18n="read_aloud">Read Aloud</span>
+            </button>
+            <!-- TTS Controls (shown when TTS active) -->
+            <div id="tts-playback-controls" style="display:none;" class="tts-playback-controls">
+                <div class="tts-controls-row">
+                    <label data-i18n="tts_volume" class="tts-controls-group-label">Vol:</label>
+                    <input type="range" class="scrub-bar" id="tts-volume" min="0" max="1" step="0.1" value="1" oninput="app.adjustTTSVolume(this.value)">
+                </div>
+                <div class="tts-controls-row">
+                    <button onclick="app.skipTTSWords(-10)" title="Skip back 10 words" class="tts-skip-btn"><i class="fas fa-backward"></i> <span data-i18n="skip_back_words">10 words</span></button>
+                    <button onclick="app.adjustTTSRate(0.75)" id="tts-rate-075" class="tts-speed-btn">0.75x</button>
+                    <button onclick="app.adjustTTSRate(1)" id="tts-rate-100" class="tts-speed-btn">1x</button>
+                    <button onclick="app.adjustTTSRate(1.25)" id="tts-rate-125" class="tts-speed-btn">1.25x</button>
+                    <button onclick="app.skipTTSWords(10)" title="Skip forward 10 words" class="tts-skip-btn"><i class="fas fa-forward"></i> <span data-i18n="skip_forward_words">10 words</span></button>
+                </div>
+                <div class="tts-controls-row">
+                    <input type="range" class="scrub-bar" id="tts-scrubber" value="0" min="0" max="100" oninput="app.seekTTS(this.value)">
+                </div>
+            </div>
+        </div>
+        
+        <div class="main-audio-controls-container">
+            <!-- MP3 Controls (default) -->
+            <div id="mp3-controls" class="audio-wrapper">
+                <input type="range" class="scrub-bar" id="audio-scrub" value="0" min="0" max="100">
+                <div class="audio-btns">
+                    <button onclick="app.skipAudio(-5)"><i class="fas fa-undo"></i> 5s</button>
+                    <button onclick="app.toggleAudio()" id="play-btn" class="primary-btn play-circle"><i class="fas fa-play" style="margin-left:4px;"></i></button>
+                    <button onclick="app.skipAudio(5)"><i class="fas fa-redo"></i> 5s</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="nav-controls" style="display:flex; gap:10px; justify-content:flex-end;">
+            <button onclick="app.prevScene()" data-i18n="prev">Prev</button>
+            <button onclick="app.nextScene()" data-i18n="next">Next</button>
+        </div>
+    </div>
+
+    <div class="watermark">Mr.Abdel-Rahman.Gamal</div>
+
+    <audio id="main-audio"></audio>
+
+    <script>
+        /* =========================================
+           DATA SECTION
+           ========================================= */
+        const UI_TEXT = {
+            en: { settings: "Settings", ui_lang: "Interface Language", trans_lang: "Translate To", voice_select: "Narrator Voice", theme: "Theme", font_size: "Font Size", vocab: "Vocabulary", quiz_title: "Comprehension Check", practice_title: "Speech Practice", record: "Record", prev: "Prev", next: "Next", close: "Close", read_aloud: "Read Aloud", stop_reading: "Stop Reading", tts_volume: "Volume", skip_back_words: "10 words", skip_forward_words: "10 words" },
+            de: { settings: "Einstellungen", ui_lang: "Sprache", trans_lang: "Übersetzen in", voice_select: "Erzählerstimme", theme: "Design", font_size: "Schriftgröße", vocab: "Wortschatz", quiz_title: "Verständnistest", practice_title: "Sprechübung", record: "Aufnehmen", prev: "Zurück", next: "Weiter", close: "Schließen", read_aloud: "Vorlesen", stop_reading: "Stopp", tts_volume: "Lautstärke", skip_back_words: "10 Wörter zurück", skip_forward_words: "10 Wörter vor" },
+            ar: { settings: "الإعدادات", ui_lang: "لغة الواجهة", trans_lang: "ترجمة إلى", voice_select: "صوت الراوي", theme: "المظهر", font_size: "حجم الخط", vocab: "المفردات", quiz_title: "اختبار الفهم", practice_title: "تدريب النطق", record: "تسجيل", prev: "السابق", next: "التالي", close: "إغلاق", read_aloud: "قراءة بصوت عالٍ", stop_reading: "إيقاف القراءة", tts_volume: "مستوى الصوت", skip_back_words: "الرجوع 10 كلمات", skip_forward_words: "التقديم 10 كلمات" }
+        };
+
+        const STORY_DATA = {
+            // MERGED DICTIONARY
+            dictionary: {
+                "dr": {en: "Dr.", de: "Dr.", ar: "دكتور"},
+                "mostafa": {en: "Mostafa", de: "Mostafa", ar: "مصطفى"},
+                "el-sayed": {en: "El-Sayed", de: "El-Sayed", ar: "السيد"},
+                "is": {en: "is", de: "ist", ar: "هو/هي"},
+                "a": {en: "a", de: "ein/eine", ar: "أ"},
+                "brilliant": {en: "brilliant", de: "brillant/genial", ar: "لامع"},
+                "egyptian": {en: "Egyptian", de: "ägyptisch", ar: "مصري"},
+                "scientist": {en: "scientist", de: "Wissenschaftler", ar: "عالم"},
+                "he": {en: "he", de: "er", ar: "هو"},
+                "was": {en: "was", de: "war", ar: "كان"},
+                "born": {en: "born", de: "geboren", ar: "ولد"},
+                "in": {en: "in", de: "in", ar: "في"},
+                "egypt": {en: "Egypt", de: "Ägypten", ar: "مصر"},
+                "1933": {en: "1933", de: "1933", ar: "1933"},
+                "demonstrated": {en: "demonstrated", de: "zeigte", ar: "أظهر"},
+                "great": {en: "great", de: "groß", ar: "عظيم"},
+                "love": {en: "love", de: "Liebe", ar: "حب"},
+                "for": {en: "for", de: "für", ar: "لـ"},
+                "learning": {en: "learning", de: "Lernen", ar: "التعلم"},
+                "from": {en: "from", de: "von", ar: "من"},
+                "young": {en: "young", de: "jung", ar: "صغير"},
+                "age": {en: "age", de: "Alter", ar: "عمر"},
+                "first": {en: "first", de: "zuerst", ar: "أولاً"},
+                "studied": {en: "studied", de: "studierte", ar: "درس"},
+                "at": {en: "at", de: "an", ar: "في"},
+                "ain": {en: "Ain", de: "Ain", ar: "عين"},
+                "shams": {en: "Shams", de: "Shams", ar: "شمس"},
+                "university": {en: "University", de: "Universität", ar: "جامعة"},
+                "cairo": {en: "Cairo", de: "Kairo", ar: "القاهرة"},
+                "later": {en: "later", de: "später", ar: "لاحقاً"},
+                "went": {en: "went", de: "ging", ar: "ذهب"},
+                "to": {en: "to", de: "zu", ar: "إلى"},
+                "the": {en: "the", de: "der/die/das", ar: "الـ"},
+                "united": {en: "United", de: "Vereinigte", ar: "الولايات"},
+                "states": {en: "States", de: "Staaten", ar: "المتحدة"},
+                "continue": {en: "continue", de: "fortsetzen", ar: "يواصل"},
+                "his": {en: "his", de: "seine/sein", ar: "له"},
+                "scientific": {en: "scientific", de: "wissenschaftlich", ar: "علمي"},
+                "research": {en: "research", de: "Forschung", ar: "بحث"},
+                "and": {en: "and", de: "und", ar: "و"},
+                "there": {en: "there", de: "dort", ar: "هناك"},
+                "became": {en: "became", de: "wurde", ar: "أصبح"},
+                "global": {en: "global", de: "global/weltweit", ar: "عالمي"},
+                "expert": {en: "expert", de: "Experte", ar: "خبير"},
+                "chemistry": {en: "chemistry", de: "Chemie", ar: "كيمياء"},
+                "nanoscience": {en: "nanoscience", de: "Nanowissenschaften", ar: "علوم النانو"},
+                "nanoscientists": {en: "Nanoscientists", de: "Nanowissenschaftler", ar: "علماء النانو"},
+                "study": {en: "study", de: "erforschen", ar: "يدرس"},
+                "very": {en: "very", de: "sehr", ar: "جداً"},
+                "tiny": {en: "tiny", de: "winzig/klein", ar: "صغير جداً"},
+                "things": {en: "things", de: "Dinge", ar: "أشياء"},
+                "nanotechnology": {en: "Nanotechnology", de: "Nanotechnologie", ar: "تكنولوجيا النانو"},
+                "of": {en: "of", de: "von", ar: "من"},
+                "particles": {en: "particles", de: "Partikel", ar: "جسيمات"},
+                "much": {en: "much", de: "viel", ar: "بكثير"},
+                "smaller": {en: "smaller", de: "kleiner", ar: "أصغر"},
+                "than": {en: "than", de: "als", ar: "من"},
+                "human": {en: "human", de: "menschlich", ar: "إنسان"},
+                "hair": {en: "hair", de: "Haar", ar: "شعر"},
+                "most": {en: "most", de: "die meisten", ar: "الأكثر"},
+                "celebrated": {en: "celebrated", de: "gefeiert/bekannt", ar: "شهرة"},
+                "work": {en: "work", de: "Arbeit", ar: "عمل"},
+                "involves": {en: "involves", de: "beinhaltet", ar: "يتضمن"},
+                "gold": {en: "gold", de: "Gold", ar: "الذهب"},
+                "found": {en: "found", de: "fand", ar: "اكتشف"},
+                "out": {en: "out", de: "heraus", ar: "أن"},
+                "that": {en: "that", de: "dass", ar: "أن"},
+                "these": {en: "these", de: "diese", ar: "هذه"},
+                "nanoparticles": {en: "nanoparticles", de: "Nanopartikel", ar: "جسيمات نانوية"},
+                "can": {en: "can", de: "kann", ar: "يمكن"},
+                "help": {en: "help", de: "helfen", ar: "تساعد"},
+                "doctors": {en: "doctors", de: "Ärzte", ar: "الأطباء"},
+                "detect": {en: "detect", de: "erkennen", ar: "الكشف"},
+                "treat": {en: "treat", de: "behandeln", ar: "علاج"},
+                "some": {en: "some", de: "einige", ar: "بعض"},
+                "types": {en: "types", de: "Arten", ar: "أنواع"},
+                "cancer": {en: "cancer", de: "Krebs", ar: "السرطان"},
+                "because": {en: "because", de: "aufgrund", ar: "بسبب"},
+                "incredible": {en: "incredible", de: "unglaublich", ar: "مذهل"},
+                "has": {en: "has", de: "hat", ar: "حصل"},
+                "received": {en: "received", de: "erhalten", ar: "تلقى"},
+                "many": {en: "many", de: "viele", ar: "العديد"},
+                "important": {en: "important", de: "wichtig", ar: "هامة"},
+                "awards": {en: "awards", de: "Auszeichnungen", ar: "جوائز"},
+                "true": {en: "true", de: "wahr", ar: "حقيقي"},
+                "hero": {en: "hero", de: "Held", ar: "بطل"},
+                "us": {en: "U.S.", de: "US-", ar: "الأمريكية"},
+                "national": {en: "National", de: "National", ar: "الوطنية"},
+                "medal": {en: "Medal", de: "Medaille", ar: "ميدالية"},
+                "impact": {en: "impact", de: "Einfluss", ar: "تأثير"},
+                "on": {en: "on", de: "auf", ar: "على"},
+                "world": {en: "world", de: "Welt", ar: "العالم"},
+                "continues": {en: "continues", de: "setzt fort", ar: "يستمر"},
+                "inspire": {en: "inspire", de: "inspirieren", ar: "إلهام"},
+                "scientists": {en: "scientists", de: "Wissenschaftler", ar: "العلماء"},
+                "egypt": {en: "Egypt", de: "Ägypten", ar: "مصر"},
+                "proud": {en: "proud", de: "stolz", ar: "فخور"},
+                "achievements": {en: "achievements", de: "Errungenschaften", ar: "إنجازات"},
+                "biography": {en: "Biography", de: "Biografie", ar: "سيرة ذاتية"},
+                "identity": {en: "Identity", de: "Identität", ar: "الهوية"},
+                "background": {en: "Background", de: "Hintergrund", ar: "الخلفية"},
+                "expertise": {en: "Expertise", de: "Expertise", ar: "الخبرة"},
+                "core": {en: "Core", de: "Kern", ar: "الأساسي"},
+                "work": {en: "Work", de: "العمل"},
+                "impact": {en: "Impact", de: "Einfluss", ar: "التأثير"},
+                "legacy": {en: "Legacy", de: "Vermächtnis", ar: "الإرث"},
+                "medals": {en: "medals", de: "Medaillen", ar: "ميداليات"},
+                "science": {en: "Science", de: "Wissenschaft", ar: "العلوم"},
+                "big": {en: "big", de: "groß", ar: "كبير"},
+                "volume": {en: "Volume", de: "Lautstärke", ar: "مستوى الصوت"}
+            },
+            
+            scenes: [
+                {
+                    id: 1,
+                    title: "Chapter 1: Identity and Background",
+                    text: "Dr. Mostafa El-Sayed is a brilliant Egyptian scientist. He was born in Egypt in 1933. He demonstrated a great love for learning from a young age. He first studied at Ain Shams University in Cairo. He later went to the United States to continue his scientific research and studied there.",
+                    syncData: [
+                        {"word":"Dr.","start":0.0,"end":0.4},
+                        {"word":"Mostafa","start":0.55,"end":0.95},
+                        {"word":"El-Sayed","start":1.1,"end":1.5},
+                        {"word":"is","start":1.65,"end":2.05},
+                        {"word":"a","start":2.2,"end":2.6},
+                        {"word":"brilliant","start":2.75,"end":3.15},
+                        {"word":"Egyptian","start":3.3,"end":3.7},
+                        {"word":"scientist.","start":3.85,"end":4.45},
+                        {"word":"He","start":4.6,"end":5.0},
+                        {"word":"was","start":5.15,"end":5.55},
+                        {"word":"born","start":5.7,"end":6.1},
+                        {"word":"in","start":6.25,"end":6.65},
+                        {"word":"Egypt","start":6.8,"end":7.2},
+                        {"word":"in","start":7.35,"end":7.75},
+                        {"word":"1933.","start":7.9,"end":8.5},
+                        {"word":"He","start":8.65,"end":9.05},
+                        {"word":"demonstrated","start":9.2,"end":9.6},
+                        {"word":"a","start":9.75,"end":10.15},
+                        {"word":"great","start":10.3,"end":10.7},
+                        {"word":"love","start":10.85,"end":11.25},
+                        {"word":"for","start":11.4,"end":11.8},
+                        {"word":"learning","start":11.95,"end":12.35},
+                        {"word":"from","start":12.5,"end":12.9},
+                        {"word":"a","start":13.05,"end":13.45},
+                        {"word":"young","start":13.6,"end":14.0},
+                        {"word":"age.","start":14.15,"end":14.75},
+                        {"word":"He","start":14.9,"end":15.3},
+                        {"word":"first","start":15.45,"end":15.85},
+                        {"word":"studied","start":16.0,"end":16.4},
+                        {"word":"at","start":16.55,"end":16.95},
+                        {"word":"Ain","start":17.1,"end":17.5},
+                        {"word":"Shams","start":17.65,"end":18.05},
+                        {"word":"University","start":18.2,"end":18.6},
+                        {"word":"in","start":18.75,"end":19.15},
+                        {"word":"Cairo.","start":19.3,"end":19.9},
+                        {"word":"He","start":20.05,"end":20.45},
+                        {"word":"later","start":20.6,"end":21.0},
+                        {"word":"went","start":21.15,"end":21.55},
+                        {"word":"to","start":21.7,"end":22.1},
+                        {"word":"the","start":22.25,"end":22.65},
+                        {"word":"United","start":22.8,"end":23.2},
+                        {"word":"States","start":23.35,"end":23.75},
+                        {"word":"to","start":23.9,"end":24.3},
+                        {"word":"continue","start":24.45,"end":24.85},
+                        {"word":"his","start":25.0,"end":25.4},
+                        {"word":"scientific","start":25.55,"end":25.95},
+                        {"word":"research","start":26.1,"end":26.5},
+                        {"word":"and","start":26.65,"end":27.05},
+                        {"word":"studied","start":27.2,"end":27.6},
+                        {"word":"there.","start":27.75,"end":28.35}
+                    ],
+                    translations: { 
+                        en: "Dr. Mostafa El-Sayed is a brilliant Egyptian scientist. He was born in Egypt in 1933. He demonstrated a great love for learning from a young age. He first studied at Ain Shams University in Cairo. He later went to the United States to continue his scientific research and studied there.",
+                        de: "Dr. Mostafa El-Sayed ist ein brillanter ägyptischer Wissenschaftler. Er wurde 1933 in Ägypten geboren. Schon in jungen Jahren zeigte er eine große Liebe zum Lernen. Er studierte zuerst an der Ain Shams Universität in Kairo. Später ging er in die Vereinigten Staaten, um seine wissenschaftliche Forschung fortzusetzen und dort zu studieren.",
+                        ar: "الدكتور مصطفى السيد عالم مصري لامع. ولد في مصر عام 1933. أظهر حباً كبيراً للتعلم منذ صغره. درس أولاً في جامعة عين شمس بالقاهرة. ذهب لاحقاً إلى الولايات المتحدة لمواصلة أبحاثه العلمية ودرس هناك."
+                    },
+                    image: "images/c1.png", audio: "c1.mp3",
+                    quiz: [
+                        { q: "When was Dr. El-Sayed born?", trans: {en: "When was Dr. El-Sayed born?", de: "Wann wurde Dr. El-Sayed geboren?", ar: "متى ولد الدكتور السيد؟"}, a: ["1933"], hint: "Year of birth." },
+                        { q: "Where did he first study?", trans: {en: "Where did he first study?", de: "Wo studierte er zuerst?", ar: "أين درس أولاً؟"}, a: ["ain shams", "university", "cairo"], hint: "University in Egypt." },
+                        { q: "What did he show from a young age?", trans: {en: "What did he show from a young age?", de: "Was zeigte er schon in jungen Jahren?", ar: "ماذا أظهر منذ صغره؟"}, a: ["love for learning", "learning", "love"], hint: "His passion." },
+                        { q: "Where did he go after Ain Shams?", trans: {en: "Where did he go after Ain Shams?", de: "Wohin ging er nach Ain Shams?", ar: "أين ذهب بعد عين شمس؟"}, a: ["united states", "america", "us"], hint: "Another country." }
+                    ]
+                },
+                {
+                    id: 2,
+                    title: "Chapter 2: Expertise and Core Work",
+                    text: "Dr. El-Sayed became a global expert in chemistry and nanoscience. Nanoscientists study very tiny things. Nanotechnology is the study of tiny things—particles much smaller than a human hair. His most celebrated work involves tiny gold particles. He found out that these gold nanoparticles can help doctors detect and treat some types of cancer.",
+                    syncData: [
+                        {"word":"Dr.","start":0.0,"end":0.4},
+                        {"word":"El-Sayed","start":0.55,"end":0.95},
+                        {"word":"became","start":1.1,"end":1.5},
+                        {"word":"a","start":1.65,"end":2.05},
+                        {"word":"global","start":2.2,"end":2.6},
+                        {"word":"expert","start":2.75,"end":3.15},
+                        {"word":"in","start":3.3,"end":3.7},
+                        {"word":"chemistry","start":3.85,"end":4.25},
+                        {"word":"and","start":4.4,"end":4.8},
+                        {"word":"nanoscience.","start":4.95,"end":5.55},
+                        {"word":"Nanoscientists","start":5.7,"end":6.1},
+                        {"word":"study","start":6.25,"end":6.65},
+                        {"word":"very","start":6.8,"end":7.2},
+                        {"word":"tiny","start":7.35,"end":7.75},
+                        {"word":"things.","start":7.9,"end":8.5},
+                        {"word":"Nanotechnology","start":8.65,"end":9.05},
+                        {"word":"is","start":9.2,"end":9.6},
+                        {"word":"the","start":9.75,"end":10.15},
+                        {"word":"study","start":10.3,"end":10.7},
+                        {"word":"of","start":10.85,"end":11.25},
+                        {"word":"tiny","start":11.4,"end":11.8},
+                        {"word":"things—particles","start":11.95,"end":12.55},
+                        {"word":"much","start":12.7,"end":13.1},
+                        {"word":"smaller","start":13.25,"end":13.65},
+                        {"word":"than","start":13.8,"end":14.2},
+                        {"word":"a","start":14.35,"end":14.75},
+                        {"word":"human","start":14.9,"end":15.3},
+                        {"word":"hair.","start":15.45,"end":16.05},
+                        {"word":"His","start":16.2,"end":16.6},
+                        {"word":"most","start":16.75,"end":17.15},
+                        {"word":"celebrated","start":17.3,"end":17.7},
+                        {"word":"work","start":17.85,"end":18.25},
+                        {"word":"involves","start":18.4,"end":18.8},
+                        {"word":"tiny","start":18.95,"end":19.35},
+                        {"word":"gold","start":19.5,"end":19.9},
+                        {"word":"particles.","start":20.05,"end":20.65},
+                        {"word":"He","start":20.8,"end":21.2},
+                        {"word":"found","start":21.35,"end":21.75},
+                        {"word":"out","start":21.9,"end":22.3},
+                        {"word":"that","start":22.45,"end":22.85},
+                        {"word":"these","start":23.0,"end":23.4},
+                        {"word":"gold","start":23.55,"end":23.95},
+                        {"word":"nanoparticles","start":24.1,"end":24.5},
+                        {"word":"can","start":24.65,"end":25.05},
+                        {"word":"help","start":25.2,"end":25.6},
+                        {"word":"doctors","start":25.75,"end":26.15},
+                        {"word":"detect","start":26.3,"end":26.7},
+                        {"word":"and","start":26.85,"end":27.25},
+                        {"word":"treat","start":27.4,"end":27.8},
+                        {"word":"some","start":27.95,"end":28.35},
+                        {"word":"types","start":28.5,"end":28.9},
+                        {"word":"of","start":29.05,"end":29.45},
+                        {"word":"cancer.","start":29.6,"end":30.2}
+                    ],
+                    translations: { 
+                        en: "Dr. El-Sayed became a global expert in chemistry and nanoscience. Nanoscientists study very tiny things. Nanotechnology is the study of tiny things—particles much smaller than a human hair. His most celebrated work involves tiny gold particles. He found out that these gold nanoparticles can help doctors detect and treat some types of cancer.",
+                        de: "Dr. El-Sayed wurde ein globaler Experte für Chemie und Nanowissenschaften. Nanowissenschaftler erforschen sehr kleine Dinge. Nanotechnologie ist die Lehre von winzigen Dingen – Partikeln, die viel kleiner sind als ein menschliches Haar. Seine bekannteste Arbeit umfasst winzige Goldpartikel. Er fand heraus, dass diese Gold-Nanopartikel Ärzten helfen können, bestimmte Krebsarten zu erkennen und zu behandeln.",
+                        ar: "أصبح الدكتور السيد خبيراً عالمياً في الكيمياء وعلوم النانو. يدرس علماء النانو الأشياء الصغيرة جداً. تكنولوجيا النانو هي دراسة الأشياء الصغيرة جداً — جزيئات أصغر بكثير من شعرة الإنسان. يتضمن عمله الأكثر شهرة جزيئات الذهب الصغيرة. اكتشف أن جزيئات الذهب النانوية هذه يمكن أن تساعد الأطباء في الكشف عن بعض أنواع السرطان وعلاجها."
+                    },
+                    image: "images/c2.png", audio: "c2.mp3",
+                    quiz: [
+                        { q: "What did Dr. El-Sayed become an expert in?", trans: {en: "What did Dr. El-Sayed become an expert in?", de: "Worin wurde Dr. El-Sayed Experte?", ar: "في ماذا أصبح الدكتور السيد خبيراً؟"}, a: ["chemistry", "nanoscience"], hint: "Two fields." },
+                        { q: "What do nanoscientists study?", trans: {en: "What do nanoscientists study?", de: "Was erforschen Nanowissenschaftler?", ar: "ماذا يدرس علماء النانو؟"}, a: ["tiny things", "small things"], hint: "Very small." },
+                        { q: "What particles are involved in his most celebrated work?", trans: {en: "What particles are involved in his most celebrated work?", de: "Welche Partikel sind in seiner bekanntesten Arbeit beteiligt?", ar: "ما هي الجزيئات المتضمنة في عمله الأكثر شهرة؟"}, a: ["gold particles", "gold"], hint: "A precious metal." },
+                        { q: "How can gold nanoparticles help doctors?", trans: {en: "How can gold nanoparticles help doctors?", de: "Wie können Gold-Nanopartikel Ärzten helfen?", ar: "كيف يمكن لجسيمات الذهب النانوية مساعدة الأطباء؟"}, a: ["detect cancer", "treat cancer", "detect and treat"], hint: "Fight disease." }
+                    ]
+                },
+                {
+                    id: 3,
+                    title: "Chapter 3: Impact and Legacy",
+                    text: "Because of his incredible work, Dr. El-Sayed has received many important awards. He is a true hero of science. He received the U.S National Medal of Science. His work has a big impact on the world and continues to inspire young scientists. Egypt is very proud of his achievements.",
+                    syncData: [
+                        {"word":"Because","start":0.0,"end":0.4},
+                        {"word":"of","start":0.55,"end":0.95},
+                        {"word":"his","start":1.1,"end":1.5},
+                        {"word":"incredible","start":1.65,"end":2.05},
+                        {"word":"work,","start":2.2,"end":2.8},
+                        {"word":"Dr.","start":2.95,"end":3.35},
+                        {"word":"El-Sayed","start":3.5,"end":3.9},
+                        {"word":"has","start":4.05,"end":4.45},
+                        {"word":"received","start":4.6,"end":5.0},
+                        {"word":"many","start":5.15,"end":5.55},
+                        {"word":"important","start":5.7,"end":6.1},
+                        {"word":"awards.","start":6.25,"end":6.85},
+                        {"word":"He","start":7.0,"end":7.4},
+                        {"word":"is","start":7.55,"end":7.95},
+                        {"word":"a","start":8.1,"end":8.5},
+                        {"word":"true","start":8.65,"end":9.05},
+                        {"word":"hero","start":9.2,"end":9.6},
+                        {"word":"of","start":9.75,"end":10.15},
+                        {"word":"science.","start":10.3,"end":10.9},
+                        {"word":"He","start":11.05,"end":11.45},
+                        {"word":"received","start":11.6,"end":12.0},
+                        {"word":"the","start":12.15,"end":12.55},
+                        {"word":"U.S","start":12.7,"end":13.1},
+                        {"word":"National","start":13.25,"end":13.65},
+                        {"word":"Medal","start":13.8,"end":14.2},
+                        {"word":"of","start":14.35,"end":14.75},
+                        {"word":"Science.","start":14.9,"end":15.5},
+                        {"word":"His","start":15.65,"end":16.05},
+                        {"word":"work","start":16.2,"end":16.6},
+                        {"word":"has","start":16.75,"end":17.15},
+                        {"word":"a","start":17.3,"end":17.7},
+                        {"word":"big","start":17.85,"end":18.25},
+                        {"word":"impact","start":18.4,"end":18.8},
+                        {"word":"on","start":18.95,"end":19.35},
+                        {"word":"the","start":19.5,"end":19.9},
+                        {"word":"world","start":20.05,"end":20.45},
+                        {"word":"and","start":20.6,"end":21.0},
+                        {"word":"continues","start":21.15,"end":21.55},
+                        {"word":"to","start":21.7,"end":22.1},
+                        {"word":"inspire","start":22.25,"end":22.65},
+                        {"word":"young","start":22.8,"end":23.2},
+                        {"word":"scientists.","start":23.35,"end":23.95},
+                        {"word":"Egypt","start":24.1,"end":24.5},
+                        {"word":"is","start":24.65,"end":25.05},
+                        {"word":"very","start":25.2,"end":25.6},
+                        {"word":"proud","start":25.75,"end":26.15},
+                        {"word":"of","start":26.3,"end":26.7},
+                        {"word":"his","start":26.85,"end":27.25},
+                        {"word":"achievements.","start":27.4,"end":28.0}
+                    ],
+                    translations: {
+                        en: "Because of his incredible work, Dr. El-Sayed has received many important awards. He is a true hero of science. He received the U.S National Medal of Science. His work has a big impact on the world and continues to inspire young scientists. Egypt is very proud of his achievements.",
+                        de: "Aufgrund seiner unglaublichen Arbeit hat Dr. El-Sayed viele wichtige Auszeichnungen erhalten. Er ist ein wahrer Held der Wissenschaft. Er erhielt die U.S. National Medal of Science. Seine Arbeit hat einen großen Einfluss auf die Welt und inspiriert weiterhin junge Wissenschaftler. Ägypten ist sehr stolz auf seine Errungenschaften.",
+                        ar: "بسبب عمله المذهل، حصل الدكتور السيد على العديد من الجوائز الهامة. إنه بطل حقيقي للعلم. حصل على الميدالية الوطنية الأمريكية للعلوم. لعمله تأثير كبير على العالم ويستمر في إلهام العلماء الشباب. مصر فخورة جداً بإنجازاته."
+                    },
+                    image: "images/c3.png", audio: "c3.mp3",
+                    quiz: [
+                        { q: "What has Dr. El-Sayed received many of?", trans: {en: "What has Dr. El-Sayed received many of?", de: "Was hat Dr. El-Sayed viel erhalten?", ar: "ماذا حصل الدكتور السيد على الكثير منه؟"}, a: ["awards", "important awards"], hint: "Recognition." },
+                        { q: "What medal did he receive?", trans: {en: "What medal did he receive?", de: "Welche Medaille erhielt er?", ar: "ما هي الميدالية التي حصل عليها؟"}, a: ["us national medal of science", "national medal of science"], hint: "American award." },
+                        { q: "What impact does his work have?", trans: {en: "What impact does his work have?", de: "Welchen Einfluss hat seine Arbeit?", ar: "ما هو تأثير عمله؟"}, a: ["big impact", "impact on the world"], hint: "Significant effect." },
+                        { q: "How does Egypt feel about his achievements?", trans: {en: "How does Egypt feel about his achievements?", de: "Wie fühlt sich Ägypten wegen seiner Errungenschaften?", ar: "كيف تشعر مصر تجاه إنجازاته؟"}, a: ["proud", "very proud"], hint: "National feeling." }
+                    ]
+                }
+            ]
+        };
+
+        /* =========================================
+           LOGIC ENGINE
+           ========================================= */
+        class StoryEngine {
+            constructor() {
+                this.idx = 0;
+                this.audio = document.getElementById('main-audio');
+                this.xp = parseInt(localStorage.getItem('story_xp')) || 0;
+                this.troubleWords = JSON.parse(localStorage.getItem('trouble_words')) || {};
+                
+                this.settings = { 
+                    ui: 'en', trans: 'en', subs: true, bilingual: false, 
+                    theme: 'light', font: 20, voiceURI: null,
+                    ttsVolume: 1.0,  // New TTS volume setting
+                    ttsRate: 1.0     // New TTS rate setting
+                };
+
+                this.currentTTSUtterance = null; 
+                this.currentTTSActiveWordEl = null; 
+                this.isReadingFullText = false; 
+                this.currentTTSWordIndex = 0; // Track current word index for full text TTS
+                this.currentTTSTotalChars = 0; // Total characters for current TTS utterance (for scrubber)
+
+                // Map of word elements and their character offsets for the current scene's full text
+                this.wordElementsMap = []; 
+                
+                this.init();
+            }
+
+            init() {
+                this.loadSettings();
+                this.initAudio();
+                this.initTTS(); 
+                this.renderUI();
+                this.renderScene();
+                this.updateXP(0);
+                
+                if (speechSynthesis.onvoiceschanged !== undefined) {
+                    speechSynthesis.onvoiceschanged = () => this.initTTS();
+                }
+            }
+
+            /* --- AUDIO --- */
+            initAudio() {
+                const scrub = document.getElementById('audio-scrub');
+                this.audio.addEventListener('timeupdate', () => {
+                    if(this.audio.duration) {
+                        scrub.value = (this.audio.currentTime / this.audio.duration) * 100;
+                    }
+                    this.handleKaraoke();
+                });
+                scrub.addEventListener('input', (e) => {
+                    if(this.audio.duration) this.audio.currentTime = (e.target.value / 100) * this.audio.duration;
+                });
+                this.audio.addEventListener('ended', () => {
+                    document.getElementById('play-btn').innerHTML = '<i class="fas fa-play" style="margin-left:4px;"></i>';
+                });
+            }
+
+            handleKaraoke() {
+                if (this.isReadingFullText) return; // Only highlight for MP3 if TTS is not active
+
+                const scene = STORY_DATA.scenes[this.idx];
+                if(scene.syncData) {
+                    const ct = this.audio.currentTime;
+                    scene.syncData.forEach((item, i) => {
+                        const el = document.getElementById(`word-${i}`);
+                        if(el) {
+                            if(ct >= item.start && ct <= item.end) el.classList.add('active-word');
+                            else el.classList.remove('active-word');
+                        }
+                    });
+                }
+            }
+
+            toggleAudio() {
+                this.stopFullTextTTS(); // Stop any active TTS
+                
+                if(this.audio.paused) { 
+                    this.audio.play(); 
+                    document.getElementById('play-btn').innerHTML = '<i class="fas fa-pause"></i>'; 
+                } else { 
+                    this.audio.pause(); 
+                    document.getElementById('play-btn').innerHTML = '<i class="fas fa-play" style="margin-left:4px;"></i>'; 
+                }
+            }
+            skipAudio(v) { 
+                this.stopFullTextTTS(); // Stop any active TTS
+                this.audio.currentTime += v; 
+            }
+
+            /* --- TTS & VOICE SETTINGS --- */
+            initTTS() {
+                const sel = document.getElementById('voice-select');
+                sel.innerHTML = '';
+                const voices = window.speechSynthesis.getVoices();
+                
+                const relevantVoices = voices.filter(v => 
+                    v.lang.startsWith('de') || v.lang.startsWith('en') || v.lang.startsWith('ar')
+                );
+
+                if(relevantVoices.length === 0) {
+                    const opt = document.createElement('option');
+                    opt.text = "Default System Voice";
+                    sel.appendChild(opt);
+                    return;
+                }
+
+                relevantVoices.forEach(v => {
+                    const opt = document.createElement('option');
+                    opt.value = v.voiceURI;
+                    opt.innerText = `${v.name} (${v.lang})`;
+                    sel.appendChild(opt);
+                });
+
+                if(this.settings.voiceURI) sel.value = this.settings.voiceURI;
+                
+                // Set initial values for new TTS controls
+                document.getElementById('tts-volume').value = this.settings.ttsVolume;
+                this.updateTTSRateButtons(this.settings.ttsRate);
+            }
+
+            changeVoice() {
+                this.settings.voiceURI = document.getElementById('voice-select').value;
+                this.saveSettings();
+                if (this.isReadingFullText) {
+                    this.speakFullText(this.currentTTSWordIndex); // Restart TTS with new voice
+                }
+            }
+
+            speak(text, isWord=false) {
+                this.stopFullTextTTS(); // Stop any active full text TTS
+                if (!this.audio.paused) { // Also pause MP3 if playing
+                    this.audio.pause();
+                    document.getElementById('play-btn').innerHTML = '<i class="fas fa-play" style="margin-left:4px;"></i>';
+                }
+
+                window.speechSynthesis.cancel(); 
+                const u = new SpeechSynthesisUtterance(text);
+                u.lang = 'en-US'; // Story source language
+                
+                const voices = window.speechSynthesis.getVoices();
+                const selectedVoice = voices.find(v => v.voiceURI === this.settings.voiceURI);
+                if(selectedVoice) u.voice = selectedVoice;
+                
+                u.volume = this.settings.ttsVolume; // Apply TTS volume
+                u.rate = this.settings.ttsRate;     // Apply TTS rate
+
+                window.speechSynthesis.speak(u);
+            }
+
+            stopFullTextTTS() {
+                if (this.isReadingFullText) {
+                    window.speechSynthesis.cancel();
+                    this.clearTTSKaraokeHighlight();
+                    this.isReadingFullText = false;
+                    this.currentTTSUtterance = null;
+                    this.currentTTSWordIndex = 0; // Reset word index
+                    document.getElementById('tts-scrubber').value = 0; // Reset scrubber
+                    document.getElementById('tts-scrubber').max = 0; // Reset scrubber max
+                    this.currentTTSTotalChars = 0;
+                    this.renderUI(); // Update button text and hide controls
+                }
+            }
+
+            speakFullText(startWordIndex = 0) {
+                // If already reading full text, toggle to stop
+                if (this.isReadingFullText) {
+                    this.stopFullTextTTS();
+                    return;
+                }
+
+                this.audio.pause(); // Pause MP3 if playing
+                document.getElementById('play-btn').innerHTML = '<i class="fas fa-play" style="margin-left:4px;"></i>';
+                window.speechSynthesis.cancel(); // Clear any individual word TTS
+
+                const scene = STORY_DATA.scenes[this.idx];
+                const fullText = scene.text;
+
+                const storyContentEl = document.getElementById('story-content');
+                const wordElements = Array.from(storyContentEl.querySelectorAll('.word'));
+                
+                // Rebuild the wordElementsMap for the current scene
+                this.wordElementsMap = []; 
+                let charOffset = 0;
+                const storyContentRawWords = fullText.split(/\s+/); // Split raw text by whitespace
+                
+                wordElements.forEach((el, i) => {
+                    const originalWord = storyContentRawWords[i]; // Get the word from original text array
+                    if (originalWord) {
+                        this.wordElementsMap.push({
+                            element: el,
+                            startChar: charOffset,
+                            endChar: charOffset + originalWord.length,
+                            wordIndex: i
+                        });
+                        charOffset += (originalWord.length + 1); // Add length of word + 1 for the space
+                    }
+                });
+
+
+                let actualStartCharInFullText = 0;
+                if (startWordIndex > 0 && startWordIndex < this.wordElementsMap.length) {
+                    actualStartCharInFullText = this.wordElementsMap[startWordIndex].startChar;
+                    this.currentTTSWordIndex = startWordIndex; // Set current word index
+                } else {
+                    this.currentTTSWordIndex = 0; // Start from beginning
+                }
+
+                const textToSpeak = fullText.substring(actualStartCharInFullText);
+                this.currentTTSTotalChars = textToSpeak.length;
+
+                const ttsScrubber = document.getElementById('tts-scrubber');
+                ttsScrubber.max = this.currentTTSTotalChars > 0 ? this.currentTTSTotalChars : 1;
+                ttsScrubber.value = 0; // Reset scrubber value for new utterance
+
+                this.currentTTSUtterance = new SpeechSynthesisUtterance(textToSpeak);
+                this.currentTTSUtterance.lang = 'en-US'; // Story source language
+                
+                const voices = window.speechSynthesis.getVoices();
+                const selectedVoice = voices.find(v => v.voiceURI === this.settings.voiceURI);
+                if (selectedVoice) this.currentTTSUtterance.voice = selectedVoice;
+
+                this.currentTTSUtterance.volume = this.settings.ttsVolume; // Apply TTS volume
+                this.currentTTSUtterance.rate = this.settings.ttsRate;     // Apply TTS rate
+
+                this.currentTTSUtterance.onboundary = (event) => {
+                    if (event.name === 'word') {
+                        const charIndexInUtterance = event.charIndex;
+                        const absoluteCharIndex = actualStartCharInFullText + charIndexInUtterance; 
+                        
+                        // Update TTS scrubber
+                        ttsScrubber.value = charIndexInUtterance;
+
+                        // Find the word element corresponding to absoluteCharIndex from the full map
+                        const activeWordData = this.wordElementsMap.find(data =>
+                            absoluteCharIndex >= data.startChar && absoluteCharIndex < data.endChar
+                        );
+
+                        if (this.currentTTSActiveWordEl) {
+                            this.currentTTSActiveWordEl.classList.remove('active-word');
+                        }
+                        if (activeWordData && activeWordData.element) {
+                            activeWordData.element.classList.add('active-word');
+                            this.currentTTSActiveWordEl = activeWordData.element;
+                            this.currentTTSWordIndex = activeWordData.wordIndex; 
+                        }
+                    }
+                };
+
+                this.currentTTSUtterance.onend = () => {
+                    this.stopFullTextTTS(); // Use stopFullTextTTS to handle all cleanup
+                };
+
+                this.currentTTSUtterance.onerror = (event) => {
+                    console.error('TTS Error:', event.error);
+                    this.stopFullTextTTS(); 
+                };
+
+                window.speechSynthesis.speak(this.currentTTSUtterance);
+                this.isReadingFullText = true;
+                this.renderUI(); // Update UI immediately to show "Stop Reading" and TTS controls
+            }
+
+            clearTTSKaraokeHighlight() {
+                if (this.currentTTSActiveWordEl) {
+                    this.currentTTSActiveWordEl.classList.remove('active-word');
+                    this.currentTTSActiveWordEl = null;
+                }
+                document.querySelectorAll('.active-word').forEach(el => el.classList.remove('active-word')); // Ensure all cleared
+            }
+
+            adjustTTSVolume(volume) {
+                this.settings.ttsVolume = parseFloat(volume);
+                if (this.currentTTSUtterance) {
+                    this.currentTTSUtterance.volume = this.settings.ttsVolume;
+                }
+                this.saveSettings();
+            }
+
+            adjustTTSRate(rate) {
+                this.settings.ttsRate = parseFloat(rate);
+                this.saveSettings();
+                this.updateTTSRateButtons(this.settings.ttsRate); // Update button styling
+
+                if (this.isReadingFullText) {
+                    // Stop and restart TTS to apply new rate reliably
+                    this.stopFullTextTTS(); 
+                    this.speakFullText(this.currentTTSWordIndex); // Restart from current word
+                }
+            }
+
+            updateTTSRateButtons(activeRate) {
+                document.getElementById('tts-rate-075').classList.remove('primary-btn');
+                document.getElementById('tts-rate-100').classList.remove('primary-btn');
+                document.getElementById('tts-rate-125').classList.remove('primary-btn');
+
+                if (activeRate === 0.75) {
+                    document.getElementById('tts-rate-075').classList.add('primary-btn');
+                } else if (activeRate === 1.0) {
+                    document.getElementById('tts-rate-100').classList.add('primary-btn');
+                } else if (activeRate === 1.25) {
+                    document.getElementById('tts-rate-125').classList.add('primary-btn');
+                }
+            }
+
+            skipTTSWords(numWords) {
+                let targetWordIndex = this.currentTTSWordIndex + numWords;
+                targetWordIndex = Math.max(0, Math.min(targetWordIndex, this.wordElementsMap.length - 1));
+                
+                if (targetWordIndex === this.currentTTSWordIndex && this.isReadingFullText) {
+                    // If trying to skip to the same word and already speaking, do nothing
+                    return; 
+                }
+
+                this.stopFullTextTTS(); // Cancel current TTS
+                this.speakFullText(targetWordIndex); // Restart from the target word
+            }
+
+            seekTTS(scrubberValue) {
+                const charIndex = parseInt(scrubberValue);
+                // Find the word whose start character is closest to or just before charIndex
+                let targetWordIndex = 0;
+                for (let i = 0; i < this.wordElementsMap.length; i++) {
+                    if (this.wordElementsMap[i].startChar <= charIndex) {
+                        targetWordIndex = i;
+                    } else {
+                        break;
+                    }
+                }
+                
+                // Only restart if the target word is different or if TTS is not currently active
+                if (targetWordIndex !== this.currentTTSWordIndex || !this.isReadingFullText) {
+                    this.stopFullTextTTS();
+                    this.speakFullText(targetWordIndex);
+                }
+            }
+
+            startPracticeRecording(btn) {
+                this.stopFullTextTTS(); // Cancel any ongoing full text TTS
+                if (!this.audio.paused) { // Also pause MP3 if playing
+                    this.audio.pause();
+                    document.getElementById('play-btn').innerHTML = '<i class="fas fa-play" style="margin-left:4px;"></i>';
+                }
+
+                const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+                if(!SR) { alert("Browser does not support Speech Recognition."); return; }
+                const rec = new SR();
+                rec.lang = 'en-US'; 
+                btn.classList.add('recording');
+                document.getElementById('speech-result').innerText = "Listening...";
+                
+                rec.onresult = (e) => {
+                    document.getElementById('speech-result').innerText = `"${e.results[0][0].transcript}"`;
+                    btn.classList.remove('recording');
+                };
+                rec.onend = () => btn.classList.remove('recording');
+                rec.start();
+            }
+
+            /* --- RENDER --- */
+            renderScene() {
+                const scene = STORY_DATA.scenes[this.idx];
+                const tl = this.settings.trans;
+
+                document.getElementById('scene-title').innerText = scene.title;
+                document.getElementById('speech-result').innerText = "...";
+
+                this.clearTTSKaraokeHighlight(); // Clear any active karaoke highlight (MP3 or TTS)
+                this.stopFullTextTTS(); // Stop any active TTS and hide controls
+
+                // Ensure MP3 is paused if scene changes
+                if (!this.audio.paused) {
+                    this.audio.pause();
+                    document.getElementById('play-btn').innerHTML = '<i class="fas fa-play" style="margin-left:4px;"></i>';
+                }
+
+                let html = "";
+                if(scene.syncData) {
+                    html = scene.syncData.map((item, i) => {
+                        const clean = item.word.replace(/[.,!?;:"'«»]/g, "").toLowerCase();
+                        const tr = STORY_DATA.dictionary[clean] ? STORY_DATA.dictionary[clean][tl] : "";
+                        const trouble = (this.troubleWords[clean] >= 3) ? "trouble-word" : "";
+                        return `<span id="word-${i}" class="word ${trouble}" onclick="app.speak('${item.word.replace(/'/g, "\\'")}', true)" data-trans="${tr}">${item.word}</span>`;
+                    }).join(' ');
+                } else {
+                    html = scene.text.split(' ').map((w, i) => {
+                        const clean = w.replace(/[.,!?;:"'«»]/g, "").toLowerCase();
+                        const tr = STORY_DATA.dictionary[clean] ? STORY_DATA.dictionary[clean][tl] : "";
+                        const trouble = (this.troubleWords[clean] >= 3) ? "trouble-word" : "";
+                        return `<span class="word ${trouble}" onclick="app.speak('${w.replace(/'/g, "\\'")}', true)" data-trans="${tr}">${w}</span>`;
+                    }).join(' ');
+                }
+                document.getElementById('story-content').innerHTML = html;
+
+                // Subtitles
+                const subBox = document.getElementById('subtitle-box');
+                subBox.innerText = scene.translations[tl];
+                subBox.style.display = this.settings.subs ? 'block' : 'none';
+                subBox.dir = (tl === 'ar') ? 'rtl' : 'ltr';
+
+                // Visuals
+                const vp = document.getElementById('visual-panel');
+                const img = document.getElementById('scene-img');
+                const bi = document.getElementById('bilingual-text');
+
+                if(this.settings.bilingual) {
+                    vp.classList.add('bilingual-mode'); 
+                    img.style.display='none'; 
+                    bi.style.display='block';
+                    bi.innerText = scene.translations[tl];
+                    bi.dir = (tl === 'ar') ? 'rtl' : 'ltr';
+                } else {
+                    vp.classList.remove('bilingual-mode'); 
+                    img.style.display='block'; 
+                    bi.style.display='none';
+                    img.src = scene.image;
+                    img.onerror = () => { img.src = `https://picsum.photos/600/400?random=${scene.id}`; }; 
+                }
+
+                this.renderQuiz(scene.quiz);
+                this.audio.src = scene.audio;
+                document.getElementById('play-btn').innerHTML = '<i class="fas fa-play" style="margin-left:4px;"></i>';
+                document.getElementById('audio-scrub').value = 0;
+                document.getElementById('progress-bar').style.width = ((this.idx + 1) / STORY_DATA.scenes.length * 100) + "%";
+                this.renderUI(); // Ensure "Read Aloud" button text and TTS controls visibility are updated
+            }
+
+            renderQuiz(questions) {
+                const container = document.getElementById('quiz-list');
+                const section = document.getElementById('quiz-section');
+                container.innerHTML = '';
+                
+                if(!questions || questions.length === 0) {
+                    section.style.display = 'none';
+                    return;
+                }
+                section.style.display = 'block';
+
+                questions.forEach((q, i) => {
+                    const transText = (q.trans && q.trans[this.settings.trans]) ? q.trans[this.settings.trans] : "---";
+                    const isSolved = (localStorage.getItem(`quiz_${this.idx}_${i}`) === 'true');
+                    
+                    const div = document.createElement('div');
+                    div.className = 'quiz-item';
+                    div.innerHTML = `
+                        <div class="quiz-header">
+                            <span class="quiz-question-text" onclick="app.speak('${q.q.replace(/'/g, "\\'")}')"><i class="fas fa-volume-up"></i> ${i+1}. ${q.q}</span>
+                            <span class="action-icon" style="cursor:pointer" onclick="app.toggleQTrans(${i})"><i class="fas fa-language"></i></span>
+                        </div>
+                        <div id="q-trans-${i}" class="feedback-msg" style="display:none; color:#666; margin-bottom:10px;" dir="${this.settings.trans === 'ar'?'rtl':'ltr'}">${transText}</div>
+                        <div class="quiz-input-group">
+                            <input type="text" class="quiz-input ${isSolved?'solved':''}" id="q-input-${i}" placeholder="..." ${isSolved?'disabled':''}>
+                            <button class="mic-btn" onclick="app.recordAnswer(${i}, this)" ${isSolved?'disabled':''}><i class="fas fa-microphone"></i></button>
+                        </div>
+                        <button class="check-btn" id="btn-${i}" onclick="app.checkAnswer(${i})" ${isSolved?'disabled':''}>Check</button>
+                        <div id="q-feedback-${i}" class="feedback-msg ${isSolved?'correct':''}"> ${isSolved?'✅ Solved!':''}</div>
+                    `;
+                    container.appendChild(div);
+                });
+            }
+
+            toggleQTrans(i) {
+                const el = document.getElementById(`q-trans-${i}`);
+                el.style.display = (el.style.display === 'block') ? 'none' : 'block';
+            }
+
+            checkAnswer(i) {
+                const q = STORY_DATA.scenes[this.idx].quiz[i];
+                const input = document.getElementById(`q-input-${i}`);
+                const btn = document.getElementById(`btn-${i}`);
+                const fb = document.getElementById(`q-feedback-${i}`);
+                const val = input.value.toLowerCase();
+                
+                const correct = q.a.some(key => val.includes(key.toLowerCase()));
+                
+                if(correct) {
+                    fb.innerText = "✅ Correct!"; fb.className = "feedback-msg correct";
+                    input.classList.add('solved');
+                    input.disabled = true;
+                    btn.disabled = true;
+                    this.updateXP(1); // 1 XP Reward
+                    localStorage.setItem(`quiz_${this.idx}_${i}`, 'true');
+                } else {
+                    fb.innerText = `❌ Hint: ${q.hint}`; fb.className = "feedback-msg incorrect";
+                }
+            }
+
+            recordAnswer(i, btn) {
+                this.stopFullTextTTS(); // Cancel any ongoing full text TTS
+                if (!this.audio.paused) { // Also pause MP3 if playing
+                    this.audio.pause();
+                    document.getElementById('play-btn').innerHTML = '<i class="fas fa-play" style="margin-left:4px;"></i>';
+                }
+
+                const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+                if(!SR) { alert("Browser not supported"); return; }
+                const rec = new SR();
+                rec.lang = 'en-US'; // Default content lang for this story is English
+                btn.classList.add('recording');
+                rec.onresult = (e) => {
+                    document.getElementById(`q-input-${i}`).value = e.results[0][0].transcript;
+                    btn.classList.remove('recording');
+                    this.checkAnswer(i);
+                };
+                rec.onend = () => btn.classList.remove('recording');
+                rec.start();
+            }
+
+            /* --- UTILS --- */
+            trackTroubleWord(w) {
+                if(!this.troubleWords[w]) this.troubleWords[w] = 0;
+                this.troubleWords[w]++;
+                localStorage.setItem('trouble_words', JSON.stringify(this.troubleWords));
+                if(this.troubleWords[w] === 3) this.renderScene(); 
+            }
+
+            nextScene() { 
+                this.stopFullTextTTS(); 
+                if (!this.audio.paused) { this.audio.pause(); }
+                if(this.idx < STORY_DATA.scenes.length-1) { this.idx++; this.renderScene(); } 
+            }
+            prevScene() { 
+                this.stopFullTextTTS(); 
+                if (!this.audio.paused) { this.audio.pause(); }
+                if(this.idx > 0) { this.idx--; this.renderScene(); } 
+            }
+            toggleBilingual() { this.settings.bilingual = !this.settings.bilingual; this.renderScene(); }
+            toggleFocusMode() { document.body.classList.toggle('focus-mode'); }
+            toggleSubtitles() { this.settings.subs = !this.settings.subs; this.renderScene(); }
+            
+            toggleModal(id) {
+                const m = document.getElementById(id);
+                m.style.display = (m.style.display==='flex')?'none':'flex';
+                if(id === 'vocab-modal') this.genVocab();
+            }
+
+            changeUILanguage() { 
+                this.settings.ui = document.getElementById('ui-lang-select').value;
+                document.body.dir = (this.settings.ui==='ar')?'rtl':'ltr';
+                this.renderUI(); this.saveSettings();
+            }
+            changeTransLanguage() { 
+                this.settings.trans = document.getElementById('trans-lang-select').value;
+                this.renderScene(); this.saveSettings();
+            }
+
+            renderUI() {
+                const t = UI_TEXT[this.settings.ui];
+                document.querySelectorAll('[data-i18n]').forEach(el => {
+                    const k = el.getAttribute('data-i18n');
+                    // Special handling for the read aloud button if it exists
+                    if (el.id === 'read-aloud-btn') {
+                        if (this.isReadingFullText) {
+                            if (t['stop_reading']) el.querySelector('span').innerText = t['stop_reading'];
+                        } else {
+                            if (t['read_aloud']) el.querySelector('span').innerText = t['read_aloud'];
+                        }
+                    }
+                    else if(t[k]) el.innerText = t[k];
+                });
+
+                document.getElementById('ui-lang-select').value = this.settings.ui;
+                document.getElementById('trans-lang-select').value = this.settings.trans;
+
+                // Toggle visibility of MP3 vs TTS controls
+                document.getElementById('mp3-controls').style.display = this.isReadingFullText ? 'none' : 'flex';
+                document.getElementById('tts-playback-controls').style.display = this.isReadingFullText ? 'flex' : 'none';
+            }
+
+            setTheme(th) {
+                document.body.className = '';
+                if(th !== 'light') document.body.classList.add(`${th}-mode`);
+                this.settings.theme = th; this.saveSettings();
+            }
+
+            adjustFont(d) {
+                if(d===0) this.settings.font = 20;
+                else this.settings.font += d;
+                document.documentElement.style.setProperty('--font-size-base', this.settings.font+'px');
+                this.saveSettings();
+            }
+
+            updateXP(n) {
+                this.xp += n;
+                document.getElementById('xp-display').innerText = this.xp;
+                localStorage.setItem('story_xp', this.xp);
+                // Badges
+                const b = document.getElementById('badge-container');
+                b.innerHTML = '';
+                if(this.xp >= 10) b.innerHTML += '<span class="badge">Reader</span>';
+                if(this.xp >= 50) b.innerHTML += '<span class="badge">Master</span>';
+            }
+
+            genVocab() {
+                const list = document.getElementById('vocab-list');
+                list.innerHTML = '';
+                const set = new Set();
+                STORY_DATA.scenes.forEach(s => {
+                    const textSource = s.text || "";
+                    textSource.split(' ').forEach(w => set.add(w.replace(/[.,!?;:"'«»]/g, "").toLowerCase()));
+                });
+                document.getElementById('vocab-count').innerText = `Total: ${set.size} words`;
+                
+                set.forEach(w => {
+                    const entry = STORY_DATA.dictionary[w];
+                    if(entry) {
+                        const d = document.createElement('div');
+                        d.className = 'vocab-card';
+                        d.innerHTML = `<strong>${w}</strong><br><small>${entry[this.settings.trans]}</small>`;
+                        d.onclick = () => this.speak(w);
+                        list.appendChild(d);
+                    }
+                });
+            }
+
+            saveSettings() { localStorage.setItem('story_set_ultra', JSON.stringify(this.settings)); }
+            loadSettings() {
+                const s = localStorage.getItem('story_set_ultra');
+                if(s) {
+                    this.settings = JSON.parse(s);
+                    this.setTheme(this.settings.theme);
+                    this.adjustFont(0);
+                    document.body.dir = (this.settings.ui==='ar')?'rtl':'ltr';
+                }
+            }
+        }
+
+        const app = new StoryEngine();
+    </script>
+</body>
+</html>
